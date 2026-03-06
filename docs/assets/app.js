@@ -1,16 +1,4 @@
-(function () {
-  "use strict";
+<script type="text/javascript" async="" src="https://acimacredit--preflight.sandbox.my.salesforce.com/lightning/lightning.out.latest/index.iife.prod.js"></script>
 
-  var mount = document.getElementById("app");
-  if (!mount) return;
-
-  var heading = document.createElement("h1");
-  heading.textContent = "Advantage Loyalty";
-
-  var status = document.createElement("p");
-  status.textContent = "GitHub Pages site is active. Static assets are ready for Salesforce Lightning Out 2.0.";
-  status.className = "status";
-
-  mount.appendChild(heading);
-  mount.appendChild(status);
-})();
+<lightning-out-application app-id="1UsVF0000000Fwj0AE" components="c-advantage-loyalty-lwc"></lightning-out-application>
+<c-advantage-loyalty-lwc></c-advantage-loyalty-lwc>
