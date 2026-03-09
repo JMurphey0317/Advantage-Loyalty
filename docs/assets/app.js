@@ -5,7 +5,7 @@
   const SCRIPT_SRC = `${SF_HOST}/lightning/lightning.out.js`;
 
 
-  const APP_NAME = "c:Advantage Loyalty"; 
+  const APP_NAME = "c:AdvantageLoyalty"; 
 
   const COMPONENT_NAME = "c:AdvantageLoyaltyLWC";
   const MOUNT_ID = "lwc-root";
