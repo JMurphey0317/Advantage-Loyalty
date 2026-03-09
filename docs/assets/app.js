@@ -53,7 +53,7 @@
       showStatus("Initializing Lightning Out…");
 
       // Try endpoint WITH the site path first (common for Experience sites)
-      const endpoint = SITE_ORIGIN + SITE_PATH;
+      const endpoint = SITE_ORIGIN;
 
       window.$Lightning.use(
         AURA_APP,
