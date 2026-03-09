@@ -4,7 +4,7 @@
 
   const APP_ID = "1UsVF0000000Fwj0AE";
 
-  // IMPORTANT: this must match exactly what Salesforce gave you
+  // Must match Salesforce snippet exactly
   const COMPONENT_TAG = "c-advantage-loyalty-lwc";
 
   function showError(err) {
@@ -16,27 +16,15 @@
     console.error(err);
   }
 
-  function loadLightningOutScript() {
+  function loadScript() {
     return new Promise((resolve, reject) => {
-      // Avoid double-loading
       const existing = document.querySelector(`script[src="${SCRIPT_SRC}"]`);
-      if (existing) {
-        // If it already loaded, resolve; otherwise wait for onload.
-        if (existing.dataset.loaded === "true") return resolve();
-        existing.addEventListener("load", resolve, { once: true });
-        existing.addEventListener("error", () => reject(new Error("Failed to load Lightning Out script")), {
-          once: true,
-        });
-        return;
-      }
+      if (existing) return resolve();
 
       const s = document.createElement("script");
       s.src = SCRIPT_SRC;
       s.async = true;
-      s.onload = () => {
-        s.dataset.loaded = "true";
-        resolve();
-      };
+      s.onload = resolve;
       s.onerror = () => reject(new Error("Failed to load script: " + SCRIPT_SRC));
       document.head.appendChild(s);
     });
@@ -47,12 +35,11 @@
       const root = document.getElementById("lwc-root");
       if (!root) throw new Error('Missing mount element: <div id="lwc-root">...</div>');
 
-      // Clear "Loading..." placeholder
+      // clear placeholder
       root.innerHTML = "";
 
-      await loadLightningOutScript();
+      await loadScript();
 
-      // Insert the exact DOM Salesforce expects
       const appEl = document.createElement("lightning-out-application");
       appEl.setAttribute("app-id", APP_ID);
       appEl.setAttribute("components", COMPONENT_TAG);
