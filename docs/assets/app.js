@@ -1,18 +1,19 @@
 (function () {
-  const SCRIPT_SRC =
-    "https://acimacredit--preflight.sandbox.my.salesforce.com/lightning/lightning.out.latest/index.iife.prod.js";
+  // This must be the Salesforce host that serves lightning.out
+  const SF_HOST = "https://acimacredit--preflight.sandbox.my.salesforce.com";
 
-  const APP_ID = "1UsVF0000000Fwj0AE";
+  const SCRIPT_SRC = `${SF_HOST}/lightning/lightning.out.js`;
 
-  // Must match Salesforce snippet exactly
-  const COMPONENT_TAG = "c-advantageloyaltylwc";
+
+  const APP_NAME = "c:Advantage Loyalty"; 
+
+  const COMPONENT_NAME = "c:AdvantageLoyaltyLWC";
+  const MOUNT_ID = "lwc-root";
 
   function showError(err) {
-    const root = document.getElementById("lwc-root");
+    const root = document.getElementById(MOUNT_ID);
     const msg = err && err.message ? err.message : String(err);
-    if (root) {
-      root.innerHTML = `<pre style="white-space:pre-wrap;color:#b00020">${msg}</pre>`;
-    }
+    if (root) root.innerHTML = `<pre style="white-space:pre-wrap;color:#b00020">${msg}</pre>`;
     console.error(err);
   }
 
@@ -32,22 +33,31 @@
 
   async function boot() {
     try {
-      const root = document.getElementById("lwc-root");
-      if (!root) throw new Error('Missing mount element: <div id="lwc-root">...</div>');
-
-      // clear placeholder
-      root.innerHTML = "";
+      const root = document.getElementById(MOUNT_ID);
+      if (!root) throw new Error(`Missing mount element: #${MOUNT_ID}`);
+      root.innerHTML = "Loading Salesforce component…";
 
       await loadScript();
 
-      const appEl = document.createElement("lightning-out-application");
-      appEl.setAttribute("app-id", APP_ID);
-      appEl.setAttribute("components", COMPONENT_TAG);
+      if (!window.$Lightning) {
+        throw new Error("Lightning Out did not initialize (window.$Lightning is missing). Check SCRIPT_SRC/CSP/CORS.");
+      }
 
-      const cmpEl = document.createElement(COMPONENT_TAG);
-
-      root.appendChild(appEl);
-      root.appendChild(cmpEl);
+      // Boot Lightning Out, then create the component into the mount div.
+      window.$Lightning.use(
+        APP_NAME,
+        function () {
+          window.$Lightning.createComponent(
+            COMPONENT_NAME,
+            {},              // attributes for your component
+            MOUNT_ID,         // id of the DOM element to mount into
+            function (cmp) {
+              // mounted
+            }
+          );
+        },
+        SF_HOST
+      );
     } catch (e) {
       showError(e);
     }
