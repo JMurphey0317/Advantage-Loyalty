@@ -1,22 +1,24 @@
 <!DOCTYPE html>
-<html>
-<head>
-  <title>Lightning Out 2.0 Demo</title>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Advantage Loyalty</title>
+    <link rel="stylesheet" href="assets/styles.css" />
+  </head>
 
-  <!-- Lightning Out Script -->
-  <script src="https://acimacredit--preflight.sandbox.my.salesforce.com/lightning/lightning.out.js"></script>
+  <body>
+    <div id="app">
+      <section style="max-width: 1100px; margin: 0 auto;">
+        <h2>Test ACIMA Advantage Loyalty</h2>
 
-</head>
+        <!-- LWC mounts here -->
+        <div id="lwc-root">
+          <p class="status">Loading…</p>
+        </div>
+      </section>
+    </div>
 
-<body>
-
-<h2>Test ACIMA Advantage Loyalty</h2>
-
-<lightning-out-application
-    app-id="1UsVF0000000Fwj0AE"
-    components="c-advantage-loyalty-lwc"
-    frontdoor-url="https://acimacredit--preflight.sandbox.my.salesforce.com/secur/frontdoor.jsp?sid=!AQEAQP0wtDwKHMkgANcwdQX2K6PRZXn1.QYq6vsT7U9dw0prF.7qeo9r0zt83oGEIMGJJ492Cjmj6IcosOjsAa32pPbaq3nT">
-</lightning-out-application>
-
-</body>
+    <script src="assets/app.js"></script>
+  </body>
 </html>
