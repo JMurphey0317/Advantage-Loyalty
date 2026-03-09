@@ -2,22 +2,33 @@
   const SF_HOST = "https://acimacredit--preflight.sandbox.my.salesforce.com";
   const SCRIPT_SRC = `${SF_HOST}/lightning/lightning.out.js`;
 
-  const AURA_APP = "c:AdvantageLoyalty"; 
+  // This matches your Aura app file AdvantageLoyalty.app
+  const AURA_APP = "c:AdvantageLoyalty";
 
-
+  // This matches your dependency
   const COMPONENT = "c:AdvantageLoyaltyLWC";
 
   const MOUNT_ID = "lwc-root";
 
+  function showStatus(text) {
+    const root = document.getElementById(MOUNT_ID);
+    if (root) root.innerHTML = `<p class="status">${text}</p>`;
+  }
+
   function showError(err) {
     const root = document.getElementById(MOUNT_ID);
     const msg = err && err.message ? err.message : String(err);
-    if (root) root.innerHTML = `<pre style="white-space:pre-wrap;color:#b00020">${msg}</pre>`;
+    if (root) {
+      root.innerHTML = `<pre style="white-space:pre-wrap;color:#b00020">${msg}</pre>`;
+    }
     console.error(err);
   }
 
   function loadScript() {
     return new Promise((resolve, reject) => {
+      const existing = document.querySelector(`script[src="${SCRIPT_SRC}"]`);
+      if (existing) return resolve();
+
       const s = document.createElement("script");
       s.src = SCRIPT_SRC;
       s.async = true;
@@ -29,27 +40,27 @@
 
   async function boot() {
     try {
-      const root = document.getElementById(MOUNT_ID);
-      if (!root) throw new Error(`Missing mount element: #${MOUNT_ID}`);
-      root.textContent = "Loading Salesforce component…";
+      showStatus("Loading Salesforce runtime…");
 
       await loadScript();
 
       if (!window.$Lightning) {
-        throw new Error("Lightning Out did not initialize (window.$Lightning missing).");
+        throw new Error(
+          "Lightning Out runtime loaded, but window.$Lightning is missing. " +
+            "This usually means the script response wasn't the real runtime JS."
+        );
       }
+
+      showStatus("Initializing Lightning Out…");
 
       window.$Lightning.use(
         AURA_APP,
         function () {
-          window.$Lightning.createComponent(
-            COMPONENT,
-            {},          // attributes
-            MOUNT_ID,    // DOM id to mount into
-            function () {
-              // mounted
-            }
-          );
+          showStatus("Creating component…");
+
+          window.$Lightning.createComponent(COMPONENT, {}, MOUNT_ID, function () {
+            // Mounted
+          });
         },
         SF_HOST
       );
