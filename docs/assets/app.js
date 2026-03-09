@@ -1,22 +1,11 @@
 (function () {
-  const SALESFORCE_ORIGIN = "https://acimacredit--preflight.sandbox.my.salesforce.com";
+  const SCRIPT_SRC =
+    "https://acimacredit--preflight.sandbox.my.salesforce.com/lightning/lightning.out.latest/index.iife.prod.js";
+
   const APP_ID = "1UsVF0000000Fwj0AE";
-  const COMPONENT_DESCRIPTOR = "c:advantageLoyaltyLwc";
 
-  function log(...args) {
-    console.log("[Advantage-Loyalty]", ...args);
-  }
-
-  function loadScript(src) {
-    return new Promise((resolve, reject) => {
-      const s = document.createElement("script");
-      s.src = src;
-      s.async = true;
-      s.onload = () => resolve();
-      s.onerror = () => reject(new Error("Failed to load script: " + src));
-      document.head.appendChild(s);
-    });
-  }
+  // IMPORTANT: this must match exactly what Salesforce gave you
+  const COMPONENT_TAG = "c-advantage-loyalty-lwc";
 
   function showError(err) {
     const root = document.getElementById("lwc-root");
@@ -27,34 +16,51 @@
     console.error(err);
   }
 
-  async function boot() {
-    try {
-      const url = `${SALESFORCE_ORIGIN}/lightning/lightning.out.js`;
-      log("Loading Lightning Out:", url);
-
-      await loadScript(url);
-
-      log("Loaded. window.$Lightning =", typeof window.$Lightning);
-
-      if (!window.$Lightning) {
-        throw new Error(
-          "$Lightning not found after loading lightning.out.js. " +
-            "Open DevTools → Network and confirm lightning.out.js is 200 and not an HTML login page."
-        );
+  function loadLightningOutScript() {
+    return new Promise((resolve, reject) => {
+      // Avoid double-loading
+      const existing = document.querySelector(`script[src="${SCRIPT_SRC}"]`);
+      if (existing) {
+        // If it already loaded, resolve; otherwise wait for onload.
+        if (existing.dataset.loaded === "true") return resolve();
+        existing.addEventListener("load", resolve, { once: true });
+        existing.addEventListener("error", () => reject(new Error("Failed to load Lightning Out script")), {
+          once: true,
+        });
+        return;
       }
 
-      window.$Lightning.use(APP_ID, function () {
-        log("Bootstrapped app. Creating component:", COMPONENT_DESCRIPTOR);
+      const s = document.createElement("script");
+      s.src = SCRIPT_SRC;
+      s.async = true;
+      s.onload = () => {
+        s.dataset.loaded = "true";
+        resolve();
+      };
+      s.onerror = () => reject(new Error("Failed to load script: " + SCRIPT_SRC));
+      document.head.appendChild(s);
+    });
+  }
 
-        window.$Lightning.createComponent(
-          COMPONENT_DESCRIPTOR,
-          {},
-          "lwc-root",
-          function () {
-            log("Component created.");
-          }
-        );
-      });
+  async function boot() {
+    try {
+      const root = document.getElementById("lwc-root");
+      if (!root) throw new Error('Missing mount element: <div id="lwc-root">...</div>');
+
+      // Clear "Loading..." placeholder
+      root.innerHTML = "";
+
+      await loadLightningOutScript();
+
+      // Insert the exact DOM Salesforce expects
+      const appEl = document.createElement("lightning-out-application");
+      appEl.setAttribute("app-id", APP_ID);
+      appEl.setAttribute("components", COMPONENT_TAG);
+
+      const cmpEl = document.createElement(COMPONENT_TAG);
+
+      root.appendChild(appEl);
+      root.appendChild(cmpEl);
     } catch (e) {
       showError(e);
     }
