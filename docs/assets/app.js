@@ -5,7 +5,7 @@
   const APP_ID = "1UsVF0000000Fwj0AE";
 
   // Must match Salesforce snippet exactly
-  const COMPONENT_TAG = "c-advantage-loyalty-lwc";
+  const COMPONENT_TAG = "c-advantageloyaltylwc";
 
   function showError(err) {
     const root = document.getElementById("lwc-root");
