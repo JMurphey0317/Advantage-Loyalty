@@ -1,15 +1,15 @@
 (function () {
-  // IMPORTANT: Use your Experience Cloud site base URL (publicly accessible)
-  const SITE_HOST = "https://acimacredit--preflight.sandbox.my.site.com/AdvantageLoyaltyProgram"; 
+  // Site origin (NO path)
+  const SITE_ORIGIN = "https://acimacredit--preflight.sandbox.my.site.com";
 
-  const SCRIPT_SRC = `${SITE_HOST}/lightning/lightning.out.js`;
+  // Your site path (the part after the domain)
+  const SITE_PATH = "/AdvantageLoyaltyProgram";
 
-  // Your Aura out app (your app file name: AdvantageLoyalty.app)
+  // Load Lightning Out runtime from the site origin
+  const SCRIPT_SRC = `${SITE_ORIGIN}/lightning/lightning.out.js`;
+
   const AURA_APP = "c:AdvantageLoyalty";
-
-  // Your LWC exposed via LO
   const COMPONENT = "c:AdvantageLoyaltyLWC";
-
   const MOUNT_ID = "lwc-root";
 
   function showStatus(text) {
@@ -26,6 +26,9 @@
 
   function loadScript() {
     return new Promise((resolve, reject) => {
+      const existing = document.querySelector(`script[src="${SCRIPT_SRC}"]`);
+      if (existing) return resolve();
+
       const s = document.createElement("script");
       s.src = SCRIPT_SRC;
       s.async = true;
@@ -40,9 +43,17 @@
       showStatus("Loading Salesforce runtime…");
       await loadScript();
 
-      if (!window.$Lightning) throw new Error("window.$Lightning missing; lightning.out.js not initialized.");
+      // Quick visible proof:
+      showStatus(`Runtime loaded. $Lightning is ${window.$Lightning ? "present" : "MISSING"}.`);
 
-      showStatus("Initializing…");
+      if (!window.$Lightning) {
+        throw new Error("window.$Lightning is missing. lightning.out.js did not initialize properly.");
+      }
+
+      showStatus("Initializing Lightning Out…");
+
+      // Try endpoint WITH the site path first (common for Experience sites)
+      const endpoint = SITE_ORIGIN + SITE_PATH;
 
       window.$Lightning.use(
         AURA_APP,
@@ -52,7 +63,7 @@
             // mounted
           });
         },
-        SITE_HOST
+        endpoint
       );
     } catch (e) {
       showError(e);
