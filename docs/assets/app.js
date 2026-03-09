@@ -1,11 +1,13 @@
 (function () {
-  const SF_HOST = "https://acimacredit--preflight.sandbox.my.salesforce.com";
-  const SCRIPT_SRC = `${SF_HOST}/lightning/lightning.out.js`;
+  // IMPORTANT: Use your Experience Cloud site base URL (publicly accessible)
+  const SITE_HOST = "https://acimacredit--preflight.sandbox.my.site.com/AdvantageLoyaltyProgram"; 
 
-  // This matches your Aura app file AdvantageLoyalty.app
+  const SCRIPT_SRC = `${SITE_HOST}/lightning/lightning.out.js`;
+
+  // Your Aura out app (your app file name: AdvantageLoyalty.app)
   const AURA_APP = "c:AdvantageLoyalty";
 
-  // This matches your dependency
+  // Your LWC exposed via LO
   const COMPONENT = "c:AdvantageLoyaltyLWC";
 
   const MOUNT_ID = "lwc-root";
@@ -18,17 +20,12 @@
   function showError(err) {
     const root = document.getElementById(MOUNT_ID);
     const msg = err && err.message ? err.message : String(err);
-    if (root) {
-      root.innerHTML = `<pre style="white-space:pre-wrap;color:#b00020">${msg}</pre>`;
-    }
+    if (root) root.innerHTML = `<pre style="white-space:pre-wrap;color:#b00020">${msg}</pre>`;
     console.error(err);
   }
 
   function loadScript() {
     return new Promise((resolve, reject) => {
-      const existing = document.querySelector(`script[src="${SCRIPT_SRC}"]`);
-      if (existing) return resolve();
-
       const s = document.createElement("script");
       s.src = SCRIPT_SRC;
       s.async = true;
@@ -41,37 +38,28 @@
   async function boot() {
     try {
       showStatus("Loading Salesforce runtime…");
-
       await loadScript();
 
-      if (!window.$Lightning) {
-        throw new Error(
-          "Lightning Out runtime loaded, but window.$Lightning is missing. " +
-            "This usually means the script response wasn't the real runtime JS."
-        );
-      }
+      if (!window.$Lightning) throw new Error("window.$Lightning missing; lightning.out.js not initialized.");
 
-      showStatus("Initializing Lightning Out…");
+      showStatus("Initializing…");
 
       window.$Lightning.use(
         AURA_APP,
         function () {
           showStatus("Creating component…");
-
           window.$Lightning.createComponent(COMPONENT, {}, MOUNT_ID, function () {
-            // Mounted
+            // mounted
           });
         },
-        SF_HOST
+        SITE_HOST
       );
     } catch (e) {
       showError(e);
     }
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", boot);
-  } else {
-    boot();
-  }
+  document.readyState === "loading"
+    ? document.addEventListener("DOMContentLoaded", boot)
+    : boot();
 })();
