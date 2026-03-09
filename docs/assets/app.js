@@ -1,15 +1,10 @@
 (function () {
-  // Site origin (NO path)
   const SITE_ORIGIN = "https://acimacredit--preflight.sandbox.my.site.com";
-
-  // Your site path (the part after the domain)
   const SITE_PATH = "/AdvantageLoyaltyProgram";
-
-  // Load Lightning Out runtime from the site origin
   const SCRIPT_SRC = `${SITE_ORIGIN}/lightning/lightning.out.js`;
 
   const AURA_APP = "c:AdvantageLoyalty";
-  const COMPONENT = "c:AdvantageLoyaltyLWC";
+  const COMPONENT = "c:AdvantageLoyaltyAuraWrapper";
   const MOUNT_ID = "lwc-root";
 
   function showStatus(text) {
@@ -43,25 +38,22 @@
       showStatus("Loading Salesforce runtime…");
       await loadScript();
 
-      // Quick visible proof:
-      showStatus(`Runtime loaded. $Lightning is ${window.$Lightning ? "present" : "MISSING"}.`);
-
       if (!window.$Lightning) {
         throw new Error("window.$Lightning is missing. lightning.out.js did not initialize properly.");
       }
 
       showStatus("Initializing Lightning Out…");
 
-      // Try endpoint WITH the site path first (common for Experience sites)
+      // Experience site context MUST include the site path
       const endpoint = `${SITE_ORIGIN}${SITE_PATH}`;
 
       window.$Lightning.use(
         AURA_APP,
         function () {
           showStatus("Creating component…");
-      window.$Lightning.createComponent(COMPONENT, {}, MOUNT_ID, function (cmp) {
-        showStatus(cmp ? "Component mounted." : "createComponent returned no component.");
-      });
+          window.$Lightning.createComponent(COMPONENT, {}, MOUNT_ID, function (cmp) {
+            showStatus(cmp ? "Component mounted." : "createComponent did not return a component.");
+          });
         },
         endpoint
       );
