@@ -44,7 +44,7 @@
 
       showStatus("Initializing Lightning Out…");
 
-      // Experience site context MUST include the site path
+      // Must include site path for Experience Cloud
       const endpoint = `${SITE_ORIGIN}${SITE_PATH}`;
 
       window.$Lightning.use(
