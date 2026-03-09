@@ -59,9 +59,9 @@
         AURA_APP,
         function () {
           showStatus("Creating component…");
-          window.$Lightning.createComponent(COMPONENT, {}, MOUNT_ID, function () {
-            // mounted
-          });
+      window.$Lightning.createComponent(COMPONENT, {}, MOUNT_ID, function (cmp) {
+        showStatus(cmp ? "Component mounted." : "createComponent returned no component.");
+      });
         },
         endpoint
       );
