@@ -4,7 +4,7 @@
     const SITE_PATH = "/AdvantageLoyaltyProgram";
     const SCRIPT_SRC = `${SITE_ORIGIN}${SITE_PATH}/lightning/lightning.out.js`;
 
-    const AURA_APP = "c:AdvantageLoyaltyapp";
+    const AURA_APP = "c:AdvantageLoyalty";
     const COMPONENT = "c:AdvantageLoyaltyWrapper";
     const MOUNT_ID = "lwc-root";
 
