@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Advantage Loyalty</title>
     
-    <!-- Add Salesforce Lightning Design System for consistent styling -->
+    <!-- Salesforce Lightning Design System -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/design-system/2.21.4/styles/salesforce-lightning-design-system.min.css" />
     <link rel="stylesheet" href="assets/styles.css" />
     
     <style>
-        /* Custom loading styles */
+        /* Your existing styles remain the same */
         body {
             background: #f3f2f2;
             margin: 0;
@@ -67,7 +67,6 @@
             100% { background-position: 1000px 0; }
         }
         
-        /* Skeleton layout */
         .skeleton-container {
             padding: 20px;
         }
@@ -113,7 +112,6 @@
             flex: 0.5;
         }
         
-        /* Spinner overlay */
         .spinner-overlay {
             position: fixed;
             top: 0;
@@ -133,7 +131,6 @@
             pointer-events: none;
         }
         
-        /* Error container */
         .error-container {
             background: white;
             border-radius: 8px;
@@ -190,7 +187,6 @@
             background: #f3f2f2;
         }
         
-        /* Success message */
         .success-message {
             background: #45b75d;
             color: white;
@@ -202,33 +198,46 @@
             gap: 8px;
         }
         
-        /* Status indicators */
-        .status-pill {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 15px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-        
-        .status-pill.loading {
-            background: #fe9339;
-            color: white;
-        }
-        
-        .status-pill.success {
-            background: #45b75d;
-            color: white;
-        }
-        
-        .status-pill.error {
-            background: #c23934;
-            color: white;
-        }
-        
-        /* Hide/show utilities */
         .hidden {
             display: none !important;
+        }
+        
+        /* Demo controls styling */
+        #demo-controls {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            background: #032d60;
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            z-index: 9999;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        #demo-controls input {
+            width: 150px;
+            padding: 4px;
+            border-radius: 3px;
+            border: none;
+            color: #000;
+            margin-top: 2px;
+        }
+        
+        #demo-controls button {
+            background: #0176d3;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 8px;
+        }
+        
+        #demo-controls button:hover {
+            background: #014486;
         }
     </style>
 </head>
@@ -241,35 +250,21 @@
             </div>
             
             <div class="app-content">
-                <!-- Status banner (for connection status) -->
+                <!-- Status banner -->
                 <div id="status-banner" class="success-message hidden">
                     <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z'/%3E%3C/svg%3E" alt="✓" />
                     <span id="status-message">Connected successfully</span>
                 </div>
 
-                <!-- Skeleton loader (visible while loading) -->
+                <!-- Skeleton loader -->
                 <div id="skeleton-loader" class="skeleton-container">
                     <div class="skeleton-header skeleton-loader"></div>
-                    
                     <div class="skeleton-filters">
                         <div class="skeleton-filter skeleton-loader"></div>
                         <div class="skeleton-filter skeleton-loader"></div>
                         <div class="skeleton-filter skeleton-loader"></div>
                     </div>
-                    
                     <div class="skeleton-table">
-                        <div class="skeleton-row">
-                            <div class="skeleton-cell skeleton-loader"></div>
-                            <div class="skeleton-cell skeleton-loader"></div>
-                            <div class="skeleton-cell skeleton-loader"></div>
-                            <div class="skeleton-cell skeleton-loader"></div>
-                        </div>
-                        <div class="skeleton-row">
-                            <div class="skeleton-cell skeleton-loader"></div>
-                            <div class="skeleton-cell skeleton-loader"></div>
-                            <div class="skeleton-cell skeleton-loader"></div>
-                            <div class="skeleton-cell skeleton-loader"></div>
-                        </div>
                         <div class="skeleton-row">
                             <div class="skeleton-cell skeleton-loader"></div>
                             <div class="skeleton-cell skeleton-loader"></div>
@@ -294,7 +289,7 @@
                 <!-- LWC mounts here -->
                 <div id="lwc-root" class="hidden"></div>
 
-                <!-- Error container (visible on error) -->
+                <!-- Error container -->
                 <div id="error-container" class="error-container hidden">
                     <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='%23c23934'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z'/%3E%3C/svg%3E" alt="Error" />
                     <h3>Unable to Load Loyalty Program</h3>
@@ -312,7 +307,7 @@
         </div>
     </div>
 
-    <!-- Spinner overlay for operations -->
+    <!-- Spinner overlay -->
     <div id="spinner-overlay" class="spinner-overlay hidden">
         <div class="slds-spinner_container">
             <div class="slds-spinner slds-spinner_large" role="status">
@@ -323,36 +318,28 @@
         </div>
     </div>
 
-    <script src="assets/app.js"></script>
-    <!-- Demo controls (remove in production) -->
-<div id="demo-controls" style="position:fixed;bottom:16px;right:16px;background:#032d60;color:white;padding:16px;border-radius:8px;font-size:13px;z-index:9999;">
-  <div style="font-weight:bold;margin-bottom:8px;">Demo Controls</div>
-  <div style="margin-bottom:6px;">
-    <label>Location ID<br>
-      <input id="demo-locationId" value="LOC-001" style="width:150px;padding:4px;border-radius:3px;border:none;color:#000;" />
-    </label>
-  </div>
-  <div style="margin-bottom:6px;">
-    <label>User GUID<br>
-      <input id="demo-userGuid" value="DEMO-USER-123" style="width:150px;padding:4px;border-radius:3px;border:none;color:#000;" />
-    </label>
-  </div>
-  <div style="margin-bottom:10px;">
-    <label>Permissions<br>
-      <input id="demo-permissions" value="view,export" style="width:150px;padding:4px;border-radius:3px;border:none;color:#000;" />
-    </label>
-  </div>
-  <button onclick="applyDemoConfig()" style="background:#0176d3;color:white;border:none;padding:6px 16px;border-radius:4px;cursor:pointer;">Apply</button>
-</div>
+    <!-- Demo controls -->
+    <div id="demo-controls">
+        <div style="font-weight:bold;margin-bottom:8px;">Demo Controls</div>
+        <div style="margin-bottom:6px;">
+            <label>Location ID<br>
+                <input id="demo-locationId" value="LOC-001" />
+            </label>
+        </div>
+        <div style="margin-bottom:6px;">
+            <label>User GUID<br>
+                <input id="demo-userGuid" value="DEMO-USER-123" />
+            </label>
+        </div>
+        <div style="margin-bottom:6px;">
+            <label>Permissions<br>
+                <input id="demo-permissions" value="view,export" />
+            </label>
+        </div>
+        <button onclick="applyDemoConfig()">Apply</button>
+    </div>
 
-<script>
-function applyDemoConfig() {
-  const locationId  = document.getElementById('demo-locationId').value;
-  const userGuid    = document.getElementById('demo-userGuid').value;
-  const permissions = document.getElementById('demo-permissions').value;
-  const params = new URLSearchParams({ locationId, userGuid, permissions });
-  window.location.search = params.toString();
-}
-</script>
+    <!-- Load the main app script -->
+    <script src="assets/app.js"></script>
 </body>
 </html>
