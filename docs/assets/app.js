@@ -46,7 +46,6 @@
             elements.statusMessage.textContent = text;
             elements.statusBanner.style.background = isError ? '#c23934' : '#45b75d';
             showElement(elements.statusBanner);
-            
             if (!isError) {
                 setTimeout(() => hideElement(elements.statusBanner), 3000);
             }
@@ -56,10 +55,10 @@
     function showError(error) {
         hideElement(elements.skeletonLoader);
         hideElement(elements.spinnerOverlay);
-        
+
         let errorMsg = '';
         let detailedError = '';
-        
+
         if (typeof error === 'string') {
             errorMsg = error;
         } else if (error && error.message) {
@@ -68,20 +67,17 @@
         } else {
             errorMsg = String(error);
         }
-        
-        // Add diagnostic info
+
         errorMsg += '\n\nCheck console for details (F12)';
-        
+
         if (elements.errorMessage) {
             elements.errorMessage.textContent = errorMsg;
             elements.errorMessage.style.whiteSpace = 'pre-wrap';
         }
-        
+
         showElement(elements.errorContainer);
         updateStatus('Error loading program', true);
         console.error('Error details:', { error, detailedError });
-        
-        // Log diagnostic info
         console.log('Diagnostic info:', {
             scriptLoaded: !!document.querySelector(`script[src="${SCRIPT_SRC}"]`),
             lightningAvailable: !!window.$Lightning,
@@ -99,7 +95,6 @@
                 elements.spinnerOverlay.classList.remove('fade-out');
             }, 300);
         }
-        
         if (elements.skeletonLoader) {
             elements.skeletonLoader.style.transition = 'opacity 0.3s ease';
             elements.skeletonLoader.style.opacity = '0';
@@ -119,7 +114,7 @@
         };
     }
 
-    window.applyDemoConfig = function() {
+    window.applyDemoConfig = function () {
         const locationId = document.getElementById('demo-locationId').value;
         const userGuid = document.getElementById('demo-userGuid').value;
         const permissions = document.getElementById('demo-permissions').value;
@@ -127,129 +122,96 @@
         window.location.search = params.toString();
     };
 
-    // Check if the Salesforce site is accessible
-    async function checkSiteAccess() {
-        try {
-            const response = await fetch(`${SITE_ORIGIN}${SITE_PATH}`, { 
-                method: 'HEAD',
-                mode: 'no-cors'
-            });
-            return { accessible: true, status: 'Site responded' };
-        } catch (error) {
-            return { accessible: false, status: error.message };
-        }
-    }
-
-    // Load Lightning Out script with better error handling
+    // Load Lightning Out script
     function loadScript() {
         return new Promise((resolve, reject) => {
-            // Remove any existing script with same src
             const existing = document.querySelector(`script[src="${SCRIPT_SRC}"]`);
-            if (existing) {
-                existing.remove();
-            }
+            if (existing) existing.remove();
 
             const script = document.createElement('script');
             script.src = SCRIPT_SRC;
             script.async = true;
-            script.crossOrigin = 'anonymous';
+            // NOTE: do NOT set crossOrigin = 'anonymous' — this causes Salesforce
+            // to withhold CORS headers on lightning.out.js
             
             let resolved = false;
-            
+
             script.onload = () => {
-                console.log('Script loaded, waiting for initialization...');
-                
-                // Wait for either $Lightning or $A to be available
+                console.log('✓ Script tag loaded, waiting for $Lightning...');
                 let attempts = 0;
-                const maxAttempts = 50; // 5 seconds total
-                
                 const checkInterval = setInterval(() => {
                     attempts++;
-                    
-                    if (window.$Lightning || window.$A) {
+                    if (window.$Lightning) {
                         clearInterval(checkInterval);
                         if (!resolved) {
                             resolved = true;
-                            console.log('Lightning framework initialized:', {
-                                hasLightning: !!window.$Lightning,
-                                hasA: !!window.$A
-                            });
+                            console.log('✓ $Lightning is available');
                             resolve();
                         }
-                    } else if (attempts >= maxAttempts) {
+                    } else if (attempts >= 50) {
                         clearInterval(checkInterval);
                         if (!resolved) {
                             resolved = true;
-                            reject(new Error('Lightning framework failed to initialize (timeout)'));
+                            reject(new Error('$Lightning did not initialize after script load'));
                         }
                     }
                 }, 100);
             };
-            
-            script.onerror = (error) => {
+
+            script.onerror = () => {
                 if (!resolved) {
                     resolved = true;
-                    reject(new Error(`Failed to load script: ${SCRIPT_SRC}`));
+                    reject(new Error(`Failed to load: ${SCRIPT_SRC} — check CORS settings in Salesforce Setup`));
                 }
             };
-            
+
             document.head.appendChild(script);
         });
     }
 
     // Initialize Lightning Out
+    // IMPORTANT: $Lightning.use() takes exactly 3 arguments for guest access:
+    //   1. Aura app name
+    //   2. success callback
+    //   3. endpoint URL
+    // The 4th argument is an OAuth access token — passing a function here
+    // will be treated as a token string and cause silent failures.
     function initializeLightningOut() {
         return new Promise((resolve, reject) => {
-            // Check if we have either $Lightning or $A
-            if (!window.$Lightning && !window.$A) {
-                reject(new Error('Lightning framework not available'));
+            if (!window.$Lightning) {
+                reject(new Error('$Lightning not available'));
                 return;
             }
 
             const endpoint = `${SITE_ORIGIN}${SITE_PATH}`;
-            console.log('Initializing with endpoint:', endpoint);
-            
+            console.log('✓ Calling $Lightning.use() with endpoint:', endpoint);
+
             const initTimeout = setTimeout(() => {
-                reject(new Error('Lightning Out initialization timed out'));
+                reject(new Error('$Lightning.use() timed out — check Aura app name and guest access'));
             }, CONFIG.timeoutMs);
 
-            // Use $Lightning if available, otherwise try $A
-            if (window.$Lightning) {
-                window.$Lightning.use(
-                    AURA_APP,
-                    function() {
-                        clearTimeout(initTimeout);
-                        console.log('Lightning Out initialized via $Lightning');
-                        updateStatus('Lightning Out initialized');
-                        resolve();
-                    },
-                    endpoint,
-                    function(error) {
-                        clearTimeout(initTimeout);
-                        console.error('$Lightning.use error:', error);
-                        reject(error);
-                    }
-                );
-            } else {
-                // Fallback to $A
-                window.$A.ready(function() {
-                    window.$Lightning = window.$Lightning || {};
-                    window.$Lightning.use = window.$Lightning.use || function(app, callback, endpoint) {
-                        // Simple wrapper for $A
-                        window.$A.getCallback(function() {
-                            callback();
-                        })();
-                    };
-                    
+            // 3 arguments only — no error callback
+            window.$Lightning.use(
+                AURA_APP,
+                function () {
                     clearTimeout(initTimeout);
-                    console.log('Using $A fallback');
+                    console.log('✓ Lightning Out initialized');
+                    updateStatus('Lightning Out initialized');
                     resolve();
-                });
-            }
+                },
+                endpoint
+                // ← NO 4th argument. Passing a function here breaks guest auth.
+            );
         });
     }
 
     // Create the component
+    // IMPORTANT: $Lightning.createComponent() takes exactly 4 arguments:
+    //   1. Component name
+    //   2. Attributes object
+    //   3. DOM element ID to mount into
+    //   4. Single callback — receives (cmp) on success, null on failure
+    // There is NO 5th error callback parameter.
     function createComponent() {
         return new Promise((resolve, reject) => {
             if (!window.$Lightning) {
@@ -257,15 +219,17 @@
                 return;
             }
 
-            showElement(elements.spinnerOverlay);
-            
+            const config = getConfig();
+            console.log('✓ Creating component with config:', config);
+
             const componentTimeout = setTimeout(() => {
-                reject(new Error('Component creation timed out'));
+                reject(new Error('createComponent timed out — verify component name and Guest User profile access'));
             }, CONFIG.timeoutMs);
 
-            const config = getConfig();
-            console.log('Creating component with:', config);
+            // Show mount target BEFORE creating the component
+            showElement(elements.lwcRoot);
 
+            // 4 arguments only — no 5th error callback
             window.$Lightning.createComponent(
                 COMPONENT,
                 {
@@ -274,21 +238,19 @@
                     permissions: config.permissions
                 },
                 MOUNT_ID,
-                function(cmp) {
+                function (cmp) {
                     clearTimeout(componentTimeout);
-                    if (cmp) {
-                        console.log('Component created:', cmp);
-                        componentMounted = true;
-                        resolve(cmp);
-                    } else {
-                        reject(new Error('Component creation returned null'));
+                    if (!cmp) {
+                        // null means failure — hide the root again
+                        hideElement(elements.lwcRoot);
+                        reject(new Error('createComponent returned null — check component name and Guest User profile'));
+                        return;
                     }
-                },
-                function(error) {
-                    clearTimeout(componentTimeout);
-                    console.error('Create component error:', error);
-                    reject(error);
+                    console.log('✓ Component created successfully');
+                    componentMounted = true;
+                    resolve(cmp);
                 }
+                // ← NO 5th argument
             );
         });
     }
@@ -296,48 +258,33 @@
     // Main boot function
     async function boot() {
         try {
-            console.log('🚀 Starting boot process...');
-            
-            // Show skeleton
+            console.log('🚀 Starting boot...');
+
             showElement(elements.skeletonLoader);
             hideElement(elements.lwcRoot);
             hideElement(elements.errorContainer);
-            
-            updateStatus('Checking Salesforce connection...');
-            
-            // Check site access first
-            const siteCheck = await checkSiteAccess();
-            if (!siteCheck.accessible) {
-                throw new Error(`Cannot access Salesforce site: ${siteCheck.status}`);
-            }
-            
+
             updateStatus('Loading Salesforce runtime...');
-            
-            // Set overall timeout
+
             const bootTimeout = setTimeout(() => {
                 if (!componentMounted) {
-                    handleError(new Error('Boot process timed out'));
+                    handleError(new Error('Boot timed out'));
                 }
             }, CONFIG.timeoutMs * 2);
 
-            // Load script
             await loadScript();
             updateStatus('Framework loaded');
-            
-            // Initialize
+
             await initializeLightningOut();
-            
-            // Create component
+
             await createComponent();
-            
+
             clearTimeout(bootTimeout);
-            
-            // Success!
+
             hideAllLoadingStates();
-            showElement(elements.lwcRoot);
             updateStatus('✅ Loyalty program loaded');
             retryCount = 0;
-            
+
         } catch (error) {
             handleError(error);
         }
@@ -345,37 +292,32 @@
 
     function handleError(error) {
         if (loadingTimeout) clearTimeout(loadingTimeout);
-        
         console.error('Boot error:', error);
-        
+
         if (retryCount < CONFIG.maxRetries) {
             retryCount++;
             updateStatus(`Retrying (${retryCount}/${CONFIG.maxRetries})...`, true);
             hideElement(elements.errorContainer);
             showElement(elements.skeletonLoader);
-            
             setTimeout(boot, CONFIG.retryDelay * retryCount);
         } else {
             showError(error);
         }
     }
 
-    // Retry function
-    window.retryLoad = function() {
+    window.retryLoad = function () {
         retryCount = 0;
         componentMounted = false;
         hideElement(elements.errorContainer);
         boot();
     };
 
-    // Start the app
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', boot);
     } else {
-        setTimeout(boot, 100); // Small delay to ensure DOM is ready
+        setTimeout(boot, 100);
     }
 
-    // Enhanced debug utilities
     window.debugLoyalty = {
         status: () => ({
             componentMounted,
@@ -387,17 +329,8 @@
             siteUrl: `${SITE_ORIGIN}${SITE_PATH}`
         }),
         retry: window.retryLoad,
-        boot: boot,
-        test: async () => {
-            console.log('Testing connection...');
-            try {
-                const response = await fetch(`${SITE_ORIGIN}${SITE_PATH}`, { mode: 'no-cors' });
-                console.log('Site response:', response.type);
-            } catch (e) {
-                console.error('Site test failed:', e);
-            }
-        }
+        boot: boot
     };
-    
-    console.log('Debug: window.debugLoyalty available - run window.debugLoyalty.status()');
+
+    console.log('Debug: window.debugLoyalty available');
 })();
