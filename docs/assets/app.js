@@ -147,81 +147,61 @@
     }
 
     // Initialize Lightning Out
-    function initializeLightningOut() {
-        return new Promise((resolve, reject) => {
-            if (!window.$Lightning) {
-                reject(new Error('$Lightning not available'));
-                return;
-            }
+function initializeLightningOut() {
+    return new Promise((resolve, reject) => {
+        if (!window.$Lightning) {
+            reject(new Error('$Lightning not available'));
+            return;
+        }
+        const endpoint = `${SITE_ORIGIN}${SITE_PATH}`;
+        const initTimeout = setTimeout(() => {
+            reject(new Error('Lightning Out initialization timed out'));
+        }, CONFIG.timeoutMs);
 
-            const endpoint = `${SITE_ORIGIN}${SITE_PATH}`;
-            console.log('Initializing Lightning Out with endpoint:', endpoint);
-            
-            const initTimeout = setTimeout(() => {
-                reject(new Error('Lightning Out initialization timed out'));
-            }, CONFIG.timeoutMs);
-
-            window.$Lightning.use(
-                AURA_APP,
-                function() {
-                    clearTimeout(initTimeout);
-                    console.log('Lightning Out initialized');
-                    updateStatus('Lightning Out initialized');
-                    resolve();
-                },
-                endpoint,
-                function(error) {
-                    clearTimeout(initTimeout);
-                    console.error('Lightning Out init error:', error);
-                    reject(error);
-                }
-            );
-        });
-    }
+        window.$Lightning.use(
+            AURA_APP,
+            function() {
+                clearTimeout(initTimeout);
+                console.log('Lightning Out initialized');
+                resolve();
+            },
+            endpoint
+        );
+    });
+}
 
     // Create the component
-    function createComponent() {
-        return new Promise((resolve, reject) => {
-            if (!window.$Lightning) {
-                reject(new Error('$Lightning not available for component creation'));
-                return;
-            }
+function createComponent() {
+    return new Promise((resolve, reject) => {
+        const componentTimeout = setTimeout(() => {
+            reject(new Error('Component creation timed out'));
+        }, CONFIG.timeoutMs);
 
-            showElement(elements.spinnerOverlay);
-            
-            const componentTimeout = setTimeout(() => {
-                reject(new Error('Component creation timed out'));
-            }, CONFIG.timeoutMs);
+        const config = getConfig();
 
-            const config = getConfig();
-            console.log('Creating component with config:', config);
+        // Show mount target BEFORE creating
+        showElement(elements.lwcRoot);
 
-            window.$Lightning.createComponent(
-                COMPONENT,
-                {
-                    locationId: config.locationId,
-                    userGuid: config.userGuid,
-                    permissions: config.permissions
-                },
-                MOUNT_ID,
-                function(cmp) {
-                    clearTimeout(componentTimeout);
-                    if (cmp) {
-                        console.log('Component created successfully');
-                        componentMounted = true;
-                        resolve(cmp);
-                    } else {
-                        reject(new Error('Component creation failed'));
-                    }
-                },
-                function(error) {
-                    clearTimeout(componentTimeout);
-                    console.error('Component creation error:', error);
-                    reject(error);
+        window.$Lightning.createComponent(
+            COMPONENT,
+            {
+                locationId:  config.locationId,
+                userGuid:    config.userGuid,
+                permissions: config.permissions
+            },
+            MOUNT_ID,
+            function(cmp) {
+                clearTimeout(componentTimeout);
+                if (!cmp) {
+                    reject(new Error('createComponent returned null — verify c:AdvantageLoyalty app name and Experience Cloud CORS'));
+                    return;
                 }
-            );
-        });
-    }
+                componentMounted = true;
+                resolve(cmp);
+            }
+        );
+    });
+}
 
     // Main boot function
     async function boot() {
